@@ -1,2 +1,6 @@
 # quantitative_finance_project
- Code related to the project for the Quantitative Finance course.
+The main task of this projecct is to reproduce the results of the paper "Clustering Market Regimes using the Wasserstein Distance". The focus of this paper is to use the p-Wasserstein distance to detect different regimes in the market. The central point is to modify the classical k-means clustering algorithm in order to group a family of empirical probability measures.
+Moreover, I've tried to come out with some different idea:
+- detect market regimes by adjusting the classical Agglomerative Hierarchical clustering
+- test the clustering algorithms against Heston model for the path price;
+  
