@@ -6,3 +6,5 @@ In addition, I tried to come up with some different ideas:
 - test the clustering algorithms against Heston model for the path price;
   
 ⚠️ This repository is a work in progress!
+
+So far, only theoretical notions are included in the slides. I will also add the results obtained from simulations.
