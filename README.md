@@ -5,6 +5,5 @@ The main task of this project is to reproduce the results of the paper "Clusteri
 
 In addition, I tried to come up with some different ideas:
 - detect market regimes by adjusting the classical Agglomerative Hierarchical clustering;
-- test the clustering algorithms against Heston model for the path price;
 
 So far, only theoretical notions are included in the slides. I will also add the results obtained from simulations.
