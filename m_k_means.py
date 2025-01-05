@@ -56,7 +56,7 @@ class MKMeans:
         return np.argmin(distances, axis=1)
     
 
-def m_k_means(X, max_iter, tol, seed_clustering):
+def m_k_means(X, max_iter, tol, seed_clustering=None):
     
     mkmeans = MKMeans(max_iter=max_iter, tol=tol, random_state=seed_clustering)
     # Fit the Wasserstein KMeans

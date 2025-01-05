@@ -10,7 +10,7 @@ from plot_utils import *
 from io_utils import *
 
 
-def hmm_clustering(log_returns, seed_clustering, max_iter, tol):
+def hmm_clustering(log_returns, max_iter, tol, seed_clustering=None):
 
     # using log returns
     time_series_data = log_returns.reshape(-1, 1)
@@ -111,7 +111,7 @@ def hmm_main2(path):
     path_seed = path_information['path_seed']
 
     # clustetring parameters
-    parameters = ask_hmm_param() ###
+    parameters = ask_hmm_param() 
     print(f"Selected parameters: {parameters}")
 
     clustering_seed = parameters['clustering_seed']
@@ -143,7 +143,7 @@ def hmm_main1(path):
 
 
     # clustetring parameters
-    parameters = ask_hmm_param() ###
+    parameters = ask_hmm_param()
     print(f"Selected parameters: {parameters}")
 
     clustering_seed = parameters['clustering_seed']

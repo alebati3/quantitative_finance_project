@@ -57,7 +57,7 @@ class WassersteinKMeans:
         return np.argmin(distances, axis=1)
 
 
-def w_k_means(X, p, max_iter, tol, seed_clustering):
+def w_k_means(X, p, max_iter, tol, seed_clustering=None):
     
     wkmeans = WassersteinKMeans(p=p, max_iter=max_iter, tol=tol, random_state=seed_clustering)
     # Fit the Wasserstein KMeans
@@ -224,7 +224,7 @@ def w_main2(path):
     clustering_seed = parameters['clustering_seed']
     max_iter = parameters['max_iter']
     tol = parameters['tol']
-    
+
     # clustering implementation
     wkmeans, off_regime_index, on_regime_index = w_k_means(X_wasserstein, p, max_iter, tol, clustering_seed)
 
