@@ -66,3 +66,18 @@ def compute_accuracy_scores_hmm(hmm_labels, theo_labels, off_regime_index, on_re
     RONS = np.sum(hmm_labels[theo_labels == 1] == on_regime_index) / len(hmm_labels[theo_labels == 1])
     TA = (np.sum(hmm_labels[theo_labels == 0] == off_regime_index) + np.sum(hmm_labels[theo_labels == 1] == on_regime_index)) / len(hmm_labels)
     return ROFS, RONS, TA
+
+
+
+def compare_columns(A, off_regime_index):
+    
+    B = np.where(A[:, 0] > A[:, 1], 0, np.where(A[:, 0] < A[:, 1], 1, 2))
+    
+    if off_regime_index == 1:
+        B = np.where(B == 0, 1, np.where(B == 1, 0, B))
+    return B
+
+def hmm_compare_columns(B, off_regime_index):
+    if off_regime_index == 1:
+        B = np.where(B == 0, 1, np.where(B == 1, 0, B))
+    return B

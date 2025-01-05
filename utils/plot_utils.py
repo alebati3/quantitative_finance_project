@@ -2,48 +2,32 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import skew, kurtosis
 from io_utils import *
+from accuracy_utils import compare_columns, hmm_compare_columns
 
 
 
-
-
-def synthetic_regime_switch_plot(t, subsequences):
-    # plot of the regimes
-    plt.figure(figsize=(10, 6))
-    for i in range(10):
-        if i == 0:
-            plt.axvspan(t[subsequences[i][0]], t[subsequences[i][-1]], color='red', alpha=0.3, label='regime switch')
-
-        else:
-        
-            plt.axvspan(t[subsequences[i][0]], t[subsequences[i][-1]], color='red', alpha=0.3)
-
-    plt.xlabel("time (years)")
-    plt.savefig('figures/regime_switch.pdf')
-    plt.show()
-
-
-
-def synthetic_price_path_plot(t, prices, subsequences, directory_path):
+def synthetic_price_path_plot(t, prices, regimes, directory_path):
     file_name = 'synthetic_path_price.pdf'
     # Construct the full file path
     file_path = os.path.join(directory_path, file_name)
     
     plt.figure(figsize=(10, 6))
     plt.plot(t,prices)
+
+    # plot of regime changes
     for i in range(10):
         if i == 0:
-            plt.axvspan(t[subsequences[i][0]], t[subsequences[i][-1]], color='red', alpha=0.3, label='regime switch')
+            plt.axvspan(t[regimes[i][0]], t[regimes[i][-1]], color='red', alpha=0.3, label='regime changes')
             
         else:
-            plt.axvspan(t[subsequences[i][0]], t[subsequences[i][-1]], color='red', alpha=0.3)
+            plt.axvspan(t[regimes[i][0]], t[regimes[i][-1]], color='red', alpha=0.3)
             
         
-    plt.title(directory_path)
     plt.xlabel("time (years)")
     plt.ylabel("stock price")
     plt.grid()
     plt.legend()
+    plt.title(file_path)
     plt.savefig(file_path)
     plt.show()
 
@@ -55,19 +39,21 @@ def synthetic_log_returns_plot(t, log_returns, subsequences, directory_path):
     
     plt.figure(figsize=(10, 6))
     plt.plot(t[:-1], log_returns)
+
+    # plot of regime changes
     for i in range(10):
         if i == 0:
-            plt.axvspan(t[subsequences[i][0]], t[subsequences[i][-1]], color='red', alpha=0.3, label='regime switch')
+            plt.axvspan(t[subsequences[i][0]], t[subsequences[i][-1]], color='red', alpha=0.3, label='regime changes')
             
         else:
             plt.axvspan(t[subsequences[i][0]], t[subsequences[i][-1]], color='red', alpha=0.3)
             
         
-    plt.title(directory_path)
     plt.xlabel("time (years)")
     plt.ylabel("log returns")
     plt.grid()
     plt.legend()
+    plt.title(file_path)
     plt.savefig(file_path)
     plt.show()
 
@@ -79,10 +65,10 @@ def real_price_path_plot(t, s, directory_path):
 
     plt.figure(figsize=(10, 6))
     plt.plot(t, s)
-    plt.title(directory_path)
     plt.xlabel("time (years)")
     plt.ylabel("price")
     plt.grid()
+    plt.title(file_path)
     plt.savefig(file_path)
     plt.show()
 
@@ -94,10 +80,10 @@ def real_log_returns_plot(t, r, directory_path):
 
     plt.figure(figsize=(10, 6))
     plt.plot(t[:-1], r)
-    plt.title(directory_path)
     plt.xlabel("time (years)")
     plt.ylabel("log returns")
     plt.grid()
+    plt.title(file_path)
     plt.savefig(file_path)
     plt.show()
 
@@ -123,7 +109,6 @@ def wk_mu_std_plot(X, wkmeans, off_regime_index, on_regime_index, directory_path
                 np.mean(wkmeans.cluster_centers_, axis=1)[on_regime_index],
                 color='red', marker='x', label='centroid 1')
 
-    plt.title(directory_path)
     plt.xlabel(f'$\sigma$', size=13)
     plt.ylabel(f'$\mu$', size=13)
     # paper notation
@@ -132,6 +117,7 @@ def wk_mu_std_plot(X, wkmeans, off_regime_index, on_regime_index, directory_path
     file_name = 'mu_std.pdf'
     # Construct the full file path
     file_path = os.path.join(directory_path, file_name)
+    plt.title(file_path)
     plt.savefig(file_path, bbox_inches='tight') 
     plt.show()
 
@@ -155,17 +141,17 @@ def wk_kurt_skew_plot(X, wkmeans, off_regime_index, on_regime_index, directory_p
                 kurtosis(wkmeans.cluster_centers_, axis=1)[on_regime_index],
                 color='red', marker='x', label='centroid 1')
 
-    plt.title(directory_path)
     plt.xlabel(f'skew', size=13)
     plt.ylabel(f'excess kurtosis', size=13)
     plt.legend()
     # Construct the full file path
     file_name = 'kurt_skew.pdf'
     file_path = os.path.join(directory_path, file_name)
+    plt.title(file_path)
     plt.savefig(file_path, bbox_inches='tight') 
     plt.show()
 
-
+# It needs to be adjusted !
 def wk_mu_skew_plot(p, seed_clustering, h_1, h_2, path, X, wkmeans, max_iter, tol, off_regime_index, on_regime_index, seed_path = None):
 
     # scatter plot of empirical cdf
@@ -203,7 +189,7 @@ def wk_mu_skew_plot(p, seed_clustering, h_1, h_2, path, X, wkmeans, max_iter, to
 
     plt.show()
 
-
+# It needs to be adjusted !
 def wk_std_skew_plot(p, seed_clustering, h_1, h_2, path, X, wkmeans, max_iter, tol, off_regime_index, on_regime_index, seed_path = None):
 
     # scatter plot of empirical cdf
@@ -241,7 +227,7 @@ def wk_std_skew_plot(p, seed_clustering, h_1, h_2, path, X, wkmeans, max_iter, t
 
     plt.show()
 
-
+# It needs to be adjusted !
 def wk_kurt_std_plot(p, seed_clustering, h_1, h_2, path, X, wkmeans, max_iter, tol, off_regime_index, on_regime_index, seed_path = None):
     # scatter plot of empirical cdf
     plt.figure(figsize=(10, 6))
@@ -277,7 +263,7 @@ def wk_kurt_std_plot(p, seed_clustering, h_1, h_2, path, X, wkmeans, max_iter, t
 
     plt.show()
 
-
+# It needs to be adjusted !
 def wk_kurt_mu_plot(p, seed_clustering, h_1, h_2, path, X, wkmeans, max_iter, tol, off_regime_index, on_regime_index, seed_path = None):
     # scatter plot of empirical cdf
     plt.figure(figsize=(10, 6))
@@ -376,7 +362,6 @@ def mk_mu_std_plot(lift_matrix, scaler, mkmeans, off_regime_index, on_regime_ind
                 centroids[on_regime_index][0],
                 color='red', marker='x', label='centroid 1')
 
-    plt.title(directory_path)
     plt.xlabel(f'$\sigma$', size=13)
     plt.ylabel(f'$\mu$', size=13)
     # paper notation
@@ -385,6 +370,7 @@ def mk_mu_std_plot(lift_matrix, scaler, mkmeans, off_regime_index, on_regime_ind
     file_name = 'mu_std.pdf'
     # Construct the full file path
     file_path = os.path.join(directory_path, file_name)
+    plt.title(file_path)
     plt.savefig(file_path, bbox_inches='tight') 
     plt.show()
 
@@ -415,12 +401,357 @@ def mk_kurt_skew_plot(lift_matrix, scaler, mkmeans, off_regime_index, on_regime_
                 color='red', marker='x', label='centroid 1')
 
 
-    plt.title(directory_path)
     plt.xlabel(f'skew', size=13)
     plt.ylabel(f'excess kurtosis', size=13)
     plt.legend()
     # Construct the full file path
     file_name = 'kurt_skew.pdf'
     file_path = os.path.join(directory_path, file_name)
+    plt.title(file_path)
+    plt.savefig(file_path, bbox_inches='tight') 
+    plt.show()
+
+
+
+
+def classified_synthetic_log_returns_plot(r_counter, off_regime_index, log_returns, t, regimes, directory_path):
+
+    b = compare_columns(r_counter, off_regime_index)
+    color = ['green', 'red', 'blue']
+    start_j = 0
+    end_j = 0
+    m_size = 1
+
+    if not 2 in b:
+        print('No ambiguities in classified synthetic log returns')
+    else:
+        print('Ambiguities in classified synthetic log returns')
+        
+    plt.figure(figsize=(10, 6))
+    for i in range(0, len(log_returns)):
+        
+        if i == (len(log_returns) - 1):
+            plt.plot(t[start_j: end_j + 1], log_returns[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+        
+        elif b[i] == b[i+1]:
+            end_j = i + 1
+            
+        else:
+            plt.plot(t[start_j: end_j + 1], log_returns[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+            start_j = i + 1
+            end_j = i + 1
+            
+    for i in range(10):
+        if i == 0:
+            plt.axvspan(t[regimes[i][0]], t[regimes[i][-1]], color='red', alpha=0.3, label='regime changes')
+            
+        else:
+            plt.axvspan(t[regimes[i][0]], t[regimes[i][-1]], color='red', alpha=0.3)        
+
+    plt.legend()  
+    plt.ylabel('log-returns')
+    plt.xlabel('time (years)')
+     # Construct the full file path
+    file_name = 'classified_synthetic_log_returns.pdf'
+    file_path = os.path.join(directory_path, file_name)
+    plt.title(file_path)
+    plt.savefig(file_path, bbox_inches='tight') 
+    plt.show()
+
+
+
+def classified_real_log_returns_plot(r_counter, off_regime_index, log_returns, t, directory_path):
+
+    b = compare_columns(r_counter, off_regime_index)
+    color = ['green', 'red', 'blue']
+    start_j = 0
+    end_j = 0
+    m_size = 1
+
+    if not 2 in b:
+        print('No ambiguities in classified real log returns')
+    else:
+        print('Ambiguities in classified real log returns')
+        
+    plt.figure(figsize=(10, 6))
+    for i in range(0, len(log_returns)):
+        
+        if i == (len(log_returns) - 1):
+            plt.plot(t[start_j: end_j + 1], log_returns[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+        
+        elif b[i] == b[i+1]:
+            end_j = i + 1
+            
+        else:
+            plt.plot(t[start_j: end_j + 1], log_returns[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+            start_j = i + 1
+            end_j = i + 1
+                    
+
+    plt.ylabel('log-returns')
+    plt.xlabel('time (years)')
+     # Construct the full file path
+    file_name = 'classified_real_log_returns.pdf'
+    file_path = os.path.join(directory_path, file_name)
+    plt.title(file_path)
+    plt.savefig(file_path, bbox_inches='tight') 
+    plt.show()
+
+
+
+# It could be modified ...
+def classified_synthetic_price_path_plot(r_counter, off_regime_index, prices, t, regimes, directory_path):
+    log_returns = np.diff(np.log(prices))
+    b = compare_columns(r_counter, off_regime_index)
+    color = ['green', 'red', 'blue']
+    start_j = 1
+    end_j = 1
+    m_size = 0.5
+
+    if not 2 in b:
+        print('No ambiguities in classified synthetic price path')
+    else:
+        print('Ambiguities in classified synthetic price path')
+        
+    plt.figure(figsize=(10, 6))
+    for i in range(0, len(log_returns)):
+        
+        if i == (len(log_returns) - 1):
+            plt.plot(t[start_j: end_j + 1], prices[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+        
+        elif b[i] == b[i+1]:
+            end_j = i + 2
+            
+        else:
+            plt.plot(t[start_j: end_j + 1], prices[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+            start_j = i + 2
+            end_j = i + 2
+            
+    for i in range(10):
+        if i == 0:
+            plt.axvspan(t[regimes[i][0]], t[regimes[i][-1]], color='red', alpha=0.3, label='regime changes')
+            
+        else:
+            plt.axvspan(t[regimes[i][0]], t[regimes[i][-1]], color='red', alpha=0.3)        
+        
+            
+    plt.legend()  
+    plt.ylabel('price')
+    plt.xlabel('time (years)')
+     # Construct the full file path
+    file_name = 'classified_synthetic_price_path.pdf'
+    file_path = os.path.join(directory_path, file_name)
+    plt.title(file_path)
+    plt.savefig(file_path, bbox_inches='tight') 
+    plt.show()
+
+
+
+# It could be modified ...
+def classified_real_price_path_plot(r_counter, off_regime_index, prices, t, directory_path):
+    log_returns = np.diff(np.log(prices))
+    b = compare_columns(r_counter, off_regime_index)
+    color = ['green', 'red', 'blue']
+    start_j = 1
+    end_j = 1
+    m_size = 0.5
+
+    if not 2 in b:
+        print('No ambiguities in classified real price path')
+    else:
+        print('Ambiguities in classified real price path')
+        
+    plt.figure(figsize=(10, 6))
+    for i in range(0, len(log_returns)):
+        
+        if i == (len(log_returns) - 1):
+            plt.plot(t[start_j: end_j + 1], prices[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+        
+        elif b[i] == b[i+1]:
+            end_j = i + 2
+            
+        else:
+            plt.plot(t[start_j: end_j + 1], prices[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+            start_j = i + 2
+            end_j = i + 2
+               
+        
+    plt.ylabel('price')
+    plt.xlabel('time (years)')
+     # Construct the full file path
+    file_name = 'classified_real_price_path.pdf'
+    file_path = os.path.join(directory_path, file_name)
+    plt.title(file_path)
+    plt.savefig(file_path, bbox_inches='tight') 
+    plt.show()
+
+# HMM
+
+def hmm_classified_synthetic_log_returns_plot(log_returns, t, hmm_labels, off_regime_index, regimes, directory_path):
+    b = hmm_compare_columns(hmm_labels, off_regime_index)
+    color = ['green', 'red']
+    # set the size of line and marker
+    m_size = 0.5
+
+    start_j = 0
+    end_j = 0
+
+    plt.figure(figsize=(10, 6))
+    for i in range(0, len(log_returns)):
+        
+        if i == (len(log_returns) - 1):
+            plt.plot(t[start_j: end_j + 1], log_returns[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+        
+        elif b[i] == b[i+1]:
+            end_j = i + 1
+            
+        else:
+            plt.plot(t[start_j: end_j + 1], log_returns[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+            start_j = i + 1
+            end_j = i + 1
+            
+    for i in range(10):
+        if i == 0:
+            plt.axvspan(t[regimes[i][0]], t[regimes[i][-1]], color='red', alpha=0.3, label='regime changes')
+            
+        else:
+            plt.axvspan(t[regimes[i][0]], t[regimes[i][-1]], color='red', alpha=0.3)        
+            
+    plt.legend(loc='upper right')
+    plt.ylabel('log-returns')
+    plt.xlabel('time (years)')
+     # Construct the full file path
+    file_name = 'classified_synthetic_log_returns.pdf'
+    file_path = os.path.join(directory_path, file_name)
+    plt.title(file_path)
+    plt.savefig(file_path, bbox_inches='tight') 
+    plt.show()
+
+def hmm_classified_real_log_returns_plot(log_returns, t, hmm_labels, off_regime_index, directory_path):
+    b = hmm_compare_columns(hmm_labels, off_regime_index)
+    color = ['green', 'red']
+    # set the size of line and marker
+    m_size = 0.5
+
+    start_j = 0
+    end_j = 0
+
+    plt.figure(figsize=(10, 6))
+    for i in range(0, len(log_returns)):
+        
+        if i == (len(log_returns) - 1):
+            plt.plot(t[start_j: end_j + 1], log_returns[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+        
+        elif b[i] == b[i+1]:
+            end_j = i + 1
+            
+        else:
+            plt.plot(t[start_j: end_j + 1], log_returns[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+            start_j = i + 1
+            end_j = i + 1
+                   
+            
+    plt.ylabel('log-returns')
+    plt.xlabel('time (years)')
+     # Construct the full file path
+    file_name = 'classified_real_log_returns.pdf'
+    file_path = os.path.join(directory_path, file_name)
+    plt.title(file_path)
+    plt.savefig(file_path, bbox_inches='tight') 
+    plt.show()
+
+
+
+def hmm_classified_synthetic_price_path_plot(prices, t, hmm_labels, off_regime_index, regimes, directory_path):
+    log_returns = np.diff(np.log(prices))
+    b = hmm_compare_columns(hmm_labels, off_regime_index)
+    color = ['green', 'red']
+    # set the size of line and marker
+    m_size = 0.5
+
+    start_j = 0
+    end_j = 0
+
+    plt.figure(figsize=(10, 6))
+    for i in range(0, len(log_returns)):
+        
+        if i == (len(log_returns) - 1):
+            plt.plot(t[start_j: end_j + 1], prices[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+        
+        elif b[i] == b[i+1]:
+            end_j = i + 2
+            
+        else:
+            plt.plot(t[start_j: end_j + 1], prices[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+            start_j = i + 2
+            end_j = i + 2
+            
+    for i in range(10):
+        if i == 0:
+            plt.axvspan(t[regimes[i][0]], t[regimes[i][-1]], color='red', alpha=0.3, label='regime changes')
+            
+        else:
+            plt.axvspan(t[regimes[i][0]], t[regimes[i][-1]], color='red', alpha=0.3)        
+        
+            
+    plt.legend(loc='upper right') 
+    plt.ylabel('price')
+    plt.xlabel('time (years)')
+     # Construct the full file path
+    file_name = 'classified_synthetic_price_path.pdf'
+    file_path = os.path.join(directory_path, file_name)
+    plt.title(file_path)
+    plt.savefig(file_path, bbox_inches='tight') 
+    plt.show()
+
+
+
+def hmm_classified_real_price_path_plot(prices, t, hmm_labels, off_regime_index, directory_path):
+    log_returns = np.diff(np.log(prices))
+    b = hmm_compare_columns(hmm_labels, off_regime_index)
+    color = ['green', 'red']
+    # set the size of line and marker
+    m_size = 0.5
+
+    start_j = 0
+    end_j = 0
+
+    plt.figure(figsize=(10, 6))
+    for i in range(0, len(log_returns)):
+        
+        if i == (len(log_returns) - 1):
+            plt.plot(t[start_j: end_j + 1], prices[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+        
+        elif b[i] == b[i+1]:
+            end_j = i + 2
+            
+        else:
+            plt.plot(t[start_j: end_j + 1], prices[start_j: end_j + 1], 
+                    color=color[b[i]], marker='.', linewidth=m_size, markersize=m_size)
+            start_j = i + 2
+            end_j = i + 2
+        
+              
+    plt.ylabel('price')
+    plt.xlabel('time (years)')
+     # Construct the full file path
+    file_name = 'classified_real_price_path.pdf'
+    file_path = os.path.join(directory_path, file_name)
+    plt.title(file_path)
     plt.savefig(file_path, bbox_inches='tight') 
     plt.show()

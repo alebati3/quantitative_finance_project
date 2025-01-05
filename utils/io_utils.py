@@ -243,6 +243,56 @@ def ask_m_param():
 
 
 
+def ask_hmm_param():
+    """
+    Prompts the user to enter values for the following parameters:
+    - clustering_seed: integer greater than or equal to zero or None (default None)
+    - max_iter: positive integer greater than zero (default 100)
+    - tol: float greater than zero but less than 1 (default 1e-2)
+
+    Returns:
+        dict: A dictionary containing the parameter values.
+    """
+    print('\nSelection of clustering parameters')
+    while True:
+        try:
+            # Input and validation for clustering_seed
+            clustering_seed = input("Enter the value of clustering_seed (default None, integer >= 0 or None): ").strip()
+            if not clustering_seed or clustering_seed.lower() == 'none':
+                clustering_seed = None
+                print("Selected value for clustering_seed: None")
+            else:
+                clustering_seed = int(clustering_seed)
+                if clustering_seed < 0:
+                    raise ValueError("clustering_seed must be an integer greater than or equal to zero or None.")
+                print(f"Selected value for clustering_seed: {clustering_seed}")
+
+            # Input and validation for max_iter
+            max_iter = input("Enter the value of max_iter (default 100, must be a positive integer): ").strip()
+            max_iter = int(max_iter) if max_iter else 100
+            if max_iter <= 0:
+                raise ValueError("max_iter must be a positive integer greater than zero.")
+
+            print(f"Selected value for max_iter: {max_iter}")
+
+            # Input and validation for tol
+            tol = input("Enter the value of tol (default 1e-2, must be a float > 0 and < 1): ").strip()
+            tol = float(tol) if tol else 1e-2
+            if tol <= 0 or tol >= 1:
+                raise ValueError("tol must be a float greater than zero but less than 1.")
+
+            print(f"Selected value for tol: {tol}")
+
+            return {
+                "clustering_seed": clustering_seed,
+                "max_iter": max_iter,
+                "tol": tol
+            }
+        except ValueError as e:
+            print(f"Error: {e}. Please try again.")
+
+
+
 
 
 

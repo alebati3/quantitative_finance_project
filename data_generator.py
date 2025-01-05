@@ -8,52 +8,10 @@ from accuracy_utils import *
 from plot_utils import *
 from io_utils import *
 
-# time horizon in years
-T = 20
 
-# number of time steps
-N = int(T * 252 * 7)
-
-# change remige's lenght
-l_regime = int(0.5  * 252 * 7)
-
-# time interval
-dt = T / N
-
-# array of all the timesteps
-timestep = np.linspace(0, T, N)
-
-# GBM parameters
-gbm_par = np.array(
-    [[0.02, 0.2], #mu,sigma *bull-regime*
-    [-0.02, 0.3]]) #mu,sigma *bear-regime*
-
-mjd_par = np.array(
-    [[0.05, 0.2, 5, 0.02, 0.0125], # (mu,sigma, lambda, gamma, delta) bull-regime
-    [-0.05, 0.4, 10, -0.04, 0.1]]) # (mu,sigma, lambda, gamma, delta) bear-regime
-
-
-def data_par(n, h_1, h_2):
-    '''
-    Given the hyper parameters h_1 and h_2 it returns the number of sub-sequences M and the effective number of log-returns that
-    are involved in the analysis (N_prime).
-    
-    '''
-    
-    # check the number of possible sub sequences M
-    i = 0
-    # N - 2 (-1:from price to log-return and -1:becuase the last index is lenght of the array -1)
-    while ((h_1 - h_2) * i + h_1) <= (n-2):
-        i = i + 1
-
-    # IMPORTANT parameters
-    m = i 
-    N_prime = (h_1 - h_2) * (m-1) + h_1 + 1
-    
-    return N_prime, m
 
 # Funzione per generare un indice di partenza valido
-def generate_start_index(A, subseq_length, used_indices, random_state=17):
+def generate_start_index(A, subseq_length, used_indices):
     """
     Genera un indice di partenza casuale per sottosequenze non sovrapposte.
 
@@ -66,7 +24,6 @@ def generate_start_index(A, subseq_length, used_indices, random_state=17):
     Returns:
     - start_index: indice di partenza valido
     """
-    np.random.seed(random_state)
     while True:
         # Genera un indice di partenza casuale
         start_index = np.random.randint(0, len(A) - subseq_length - 1)
@@ -77,12 +34,12 @@ def generate_start_index(A, subseq_length, used_indices, random_state=17):
             return start_index
 
 # Funzione principale
-def generate_regimes(N_prime, subseq_length, num_subsequences=10):
+def generate_regimes(n, regime_length, num_subsequences=10, random_state=17):
     """
     Genera casualmente 10 intervalli di tempo distinti della stessa lunghezza.
 
     Parameters:
-    - N_prime: dimensione dell'array di input
+    - n: dimensione dell'array di input
     - subseq_length: lunghezza delle sottosequenze
     - num_subsequences: numero di sottosequenze da generare (default 10)
 
@@ -91,32 +48,33 @@ def generate_regimes(N_prime, subseq_length, num_subsequences=10):
     - B: etichette per i log-returns
     - C: etichette per i prezzi
     """
-    A = np.arange(0, N_prime+1)
-
+    subseq_length = regime_length + 1
+    a = np.arange(0, n+1)
+    np.random.seed(random_state)
     # Set per memorizzare gli indici di partenza usati
     used_indices = set()
 
     # Generazione delle sottosequenze random non sovrapposte con almeno un elemento di distanza
     subsequences = []
     for _ in range(num_subsequences):
-        start_index = generate_start_index(A, subseq_length, used_indices)
-        subsequences.append(A[start_index:start_index + subseq_length])
+        start_index = generate_start_index(a, subseq_length, used_indices)
+        subsequences.append(a[start_index:start_index + subseq_length])
 
     subsequences = np.sort(np.array(subsequences), axis=0)
     
     # Label per i log-returns
-    B = np.zeros(N_prime)
+    b = np.zeros(n)
     for sub in subsequences:
-        B[sub[0]: sub[-1]] = 1    
-    B = B.astype(int)
+        b[sub[0]: sub[-1]] = 1    
+    b = b.astype(int)
 
     # Label per i prezzi
-    C = np.zeros(N_prime+1)
+    c = np.zeros(n+1)
     for sub in subsequences:
-        C[sub] = 1    
-    C = C.astype(int)
+        c[sub] = 1    
+    c = c.astype(int)
 
-    return subsequences, B, C
+    return subsequences, b, c
 
 def gbm(S0, mu, sigma, n, dt):
     """
@@ -142,29 +100,29 @@ def gbm(S0, mu, sigma, n, dt):
     S[1:] = S0 * np.exp(X)
     return S
 
-def gbm_path(N_prime, C, t, dt, gbm_par, seed_path=None):
+def gbm_path(n, c, t, dt, gbm_par, seed_path=None):
     '''
     It simulates the entire path of a GBM with regimes switch.
     
     '''
     np.random.seed(seed_path)
     # array of prices
-    s = np.zeros(N_prime + 1)
+    s = np.zeros(n + 1)
     # initial stock price
     s[0] = 1
     s_0 = s[0]
     start_index = 0
     stop_index = 1
 
-    for k in range(1, N_prime+1):
-        if k == N_prime:
-            s[start_index : stop_index + 1] = gbm(s_0, gbm_par[C[k]][0], gbm_par[C[k]][1], len(t[start_index : stop_index + 1]), dt)
+    for k in range(1, n+1):
+        if k == n:
+            s[start_index : stop_index + 1] = gbm(s_0, gbm_par[c[k]][0], gbm_par[c[k]][1], len(t[start_index : stop_index + 1]), dt)
 
-        elif C[k] == C[k+1]:
+        elif c[k] == c[k+1]:
             stop_index = k+1
 
         else:
-            s[start_index : stop_index + 1] = gbm(s_0, gbm_par[C[k]][0], gbm_par[C[k]][1], len(t[start_index : stop_index + 1]), dt)
+            s[start_index : stop_index + 1] = gbm(s_0, gbm_par[c[k]][0], gbm_par[c[k]][1], len(t[start_index : stop_index + 1]), dt)
             #updates
             start_index = k
             s_0 = s[k]
@@ -214,22 +172,22 @@ def mjd(S0, mu, sigma, lam, gamma, delta, n, dt):
     return S
 
 
-def mjd_path(N_prime, C, t, dt, mjd_par, seed_path):
+def mjd_path(n, C, t, dt, mjd_par, seed_path):
     '''
     It simulates the entire path of a MJD with regimes switch.
     
     '''
     np.random.seed(seed_path)
     # array of prices
-    s = np.zeros(N_prime + 1)
+    s = np.zeros(n + 1)
     # initial stock price
     s[0] = 1
     s_0 = s[0]
     start_index = 0
     stop_index = 1
 
-    for k in range(1, N_prime+1):
-        if k == N_prime:
+    for k in range(1, n+1):
+        if k == n:
             s[start_index : stop_index + 1] = mjd(s_0, mjd_par[C[k]][0], mjd_par[C[k]][1], mjd_par[C[k]][2], mjd_par[C[k]][3], mjd_par[C[k]][4], len(t[start_index : stop_index + 1]), dt)
 
         elif C[k] == C[k+1]:
@@ -246,72 +204,88 @@ def mjd_path(N_prime, C, t, dt, mjd_par, seed_path):
 
 
 
-def synthetic_path_generation(path, h1, h2):
-    # for both W k-means and M k-means
 
-    N_prime, M = data_par(N, h1, h2)
-    t = timestep[: N_prime + 1]
+def synthetic_path_generation(path):
+    # for W k-means, M k-means and HMM
 
-    subsequences, theo_labels, labels_prices = generate_regimes(N_prime, subseq_length = l_regime)
+    # time horizon in years
+    T = 20
+
+    # number of hourly returns 
+    N = int(T * 252 * 7)
+
+    # lenght of regime change
+    l_regime = int(0.5  * 252 * 7)
+
+    # time interval
+    dt = T / N
+
+    # time evolution
+    t = np.linspace(0, T, N+1)
+
+    regimes, theo_return_labels, theo_price_labels = generate_regimes(N, l_regime)
+
+    # GBM parameters
+    gbm_par = np.array(
+        [[0.02, 0.2], #mu,sigma *bull-regime*
+        [-0.02, 0.3]]) #mu,sigma *bear-regime*
+
+    # MJD parameters
+    mjd_par = np.array(
+        [[0.05, 0.2, 5, 0.02, 0.0125], # (mu,sigma, lambda, gamma, delta) bull-regime
+        [-0.05, 0.4, 10, -0.04, 0.1]]) # (mu,sigma, lambda, gamma, delta) bear-regime
+
+
+    # to ensure reproducibility
+    path_seed = ask_path_seed() 
 
     if path == 'GBM':
-        # to ensure reproducibility
-        path_seed = ask_path_seed()
-        print(f"Seed path scelto: {path_seed}")  
-        prices = gbm_path(N_prime, labels_prices, t, dt, gbm_par, path_seed) 
+
+        prices = gbm_path(N, theo_price_labels, t, dt, gbm_par, path_seed) 
         log_returns = np.diff(np.log(prices))
 
         # plot price path with regime switch
         directory_path = f'figures/{path}/path_seed_{path_seed}'
         ensure_directory_exists(directory_path)
-        synthetic_price_path_plot(t, prices, subsequences, directory_path)
-        synthetic_log_returns_plot(t, log_returns, subsequences, directory_path)
+
+        synthetic_price_path_plot(t, prices, regimes, directory_path)
+        synthetic_log_returns_plot(t, log_returns, regimes, directory_path)
 
 
         gbm_information = {'prices': prices, 'log_returns': log_returns, 't': t,
-        'subsequences' : subsequences, 'theo_labels': theo_labels, 'labels_prices': labels_prices, 'path_seed': path_seed}
-        return M, gbm_information
+        'regimes' : regimes, 'theo_return_labels': theo_return_labels, 'path_seed': path_seed}
+        return gbm_information
 
     elif path == 'MJD':
-        # to ensure reproducibility
-        path_seed = ask_path_seed()
-        print(f"path seed scelto: {path_seed}")  
-        prices = mjd_path(N_prime, labels_prices, t, dt, mjd_par, path_seed) 
+
+        prices = mjd_path(N, theo_price_labels, t, dt, mjd_par, path_seed) 
         log_returns = np.diff(np.log(prices))
 
         # plot price path with regime switch
         directory_path = f'figures/{path}/path_seed_{path_seed}'
         ensure_directory_exists(directory_path)
-        synthetic_price_path_plot(t, prices, subsequences, directory_path)
-        synthetic_log_returns_plot(t, log_returns, subsequences, directory_path)
+        synthetic_price_path_plot(t, prices, regimes, directory_path)
+        synthetic_log_returns_plot(t, log_returns, regimes, directory_path)
 
         mjd_information = {'prices': prices, 'log_returns': log_returns, 't': t,
-        'subsequences' : subsequences, 'theo_labels': theo_labels, 'labels_prices': labels_prices, 'path_seed': path_seed}
-        return M, mjd_information
+        'regimes' : regimes, 'theo_return_labels': theo_return_labels, 'path_seed': path_seed}
+        return mjd_information
     
 
 
-def real_path_processing(path, h1, h2):
-    # for both M k-means and W k-means
+def import_real_data(path):
+    # for  W k-means, M k-means and HMM
     # import real data
     df = pd.read_csv('real_data/' + path.lower() + '_time_series.txt')
-    s = df['price'].values
-    timestep_real = df['time'].values
-
-    N_real = len(timestep_real)
-    # dt_real = timestep_real[1] - timestep_real[0]
-    N_prime, m = data_par(N_real, h1, h2)
-
-    # data for the analysis
-    t = timestep_real[: N_prime + 1]
-    s = s[: N_prime + 1]
-    log_returns = np.diff(np.log(s))
+    prices = df['price'].values
+    t = df['time'].values
+    log_returns = np.diff(np.log(prices))
 
     # plots
     directory_path = f'figures/{path}'
     ensure_directory_exists(directory_path)
-    real_price_path_plot(t, s, directory_path)
+    real_price_path_plot(t, prices, directory_path)
     real_log_returns_plot(t, log_returns, directory_path)
 
-    path_information = {'prices': s, 'log_returns': log_returns, 't': t}
-    return m, path_information
+    path_information = {'prices': prices, 'log_returns': log_returns, 't': t}
+    return path_information
