@@ -137,13 +137,18 @@ def m_main():
 
 def m_main1(path):
     # just for W k-means; real data
+
+    # path information
+    path_information = import_real_data(path)
+
+    # clustering pre processing
     h1, h2 = ask_h1_h2()
     print(f"Valori scelti: h1 = {h1}, h2 = {h2}")
-    # path information
-    M, path_information = real_path_processing(path, h1, h2)
-    prices = path_information['prices']
-    log_returns = path_information['log_returns']
-    t = path_information['t']
+
+    M, actual_path_information = real_path_processing(path_information, h1, h2)
+    prices = actual_path_information['prices']
+    log_returns = actual_path_information['log_returns']
+    t = actual_path_information['t']
 
     # clustering pre processing
     lift_matrix = m_lift_function(h1, h2, log_returns, M)
@@ -165,30 +170,42 @@ def m_main1(path):
     # m k-means clustetring
     mkmeans, off_regime_index, on_regime_index = m_k_means(standardized_X_moments, max_iter, tol, clustering_seed)  
 
-    # scatter plots-clustering:
     # create directory
     directory_path = f'figures/{path}/M_k_means/h_{h1}_{h2}/max_iter_{max_iter}_tol_{tol}/clustering_seed_{clustering_seed}/p_{p}'
     ensure_directory_exists(directory_path)
+
     # projection of the clusters on the mu-sted plane
     mk_mu_std_plot(lift_matrix, scaler, mkmeans, off_regime_index, on_regime_index, directory_path)
     # projection of the clusters on the mu-sted plane
     if p > 3:
         mk_kurt_skew_plot(lift_matrix, scaler, mkmeans, off_regime_index, on_regime_index, directory_path)
 
+    # plots classified real log returns and path price
+    r_counter = opt_counter(mkmeans, len(log_returns), M, h1, h2, o=False)
+    classified_real_log_returns_plot(r_counter, off_regime_index, log_returns, t, directory_path)
+    classified_real_price_path_plot(r_counter, off_regime_index, prices, t, directory_path)
+
+
 
 def m_main2(path):
     # just for M k-means; synthetic data
+
+    # synthetic path generation
+    path_information = synthetic_path_generation(path)
+
+    # clustering pre processing
     h1, h2 = ask_h1_h2()
     print(f"Valori scelti: h1 = {h1}, h2 = {h2}")
-    # path information
-    M, path_information = synthetic_path_generation(path, h1, h2)
-    prices = path_information['prices']
-    log_returns = path_information['log_returns']
-    t = path_information['t']
-    subsequences = path_information['subsequences']
-    theo_labels = path_information['theo_labels']
-    labels_prices = path_information['labels_prices']
-    path_seed = path_information['path_seed']
+
+    # actual variables
+    M, actual_path_information = synthetic_path_processing(path_information, h1, h2)
+
+    prices = actual_path_information['prices']
+    log_returns = actual_path_information['log_returns']
+    t = actual_path_information['t']
+    regimes = actual_path_information['regimes']
+    theo_return_labels = actual_path_information['theo_return_labels']
+    path_seed = actual_path_information['path_seed'] 
 
     # clustering pre processing
     lift_matrix = m_lift_function(h1, h2, log_returns, M)
@@ -225,7 +242,9 @@ def m_main2(path):
 
     # accuracy scores
     r_counter = opt_counter(mkmeans, len(log_returns), M, h1, h2, o=False)
-    ROFS, RONS, TA = compute_accuracy_scores(r_counter, off_regime_index, on_regime_index, theo_labels)
+    classified_synthetic_log_returns_plot(r_counter, off_regime_index, log_returns, t, regimes, directory_path)
+    classified_synthetic_price_path_plot(r_counter, off_regime_index, prices, t, regimes, directory_path)
+    ROFS, RONS, TA = compute_accuracy_scores(r_counter, off_regime_index, on_regime_index, theo_return_labels)
     save_and_print_values(directory_path, ROFS, RONS, TA, dec=2)
 
 

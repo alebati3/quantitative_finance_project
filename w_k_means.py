@@ -3,8 +3,6 @@ import sys
 import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances
 from scipy.spatial.distance import minkowski
-import pandas as pd
-import matplotlib.pyplot as plt
 from data_generator import *
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'utils')))
 from pre_processing_utils import *
@@ -137,85 +135,50 @@ def w_main():
         print("\nErrore: Inserisci un numero valido.")
 
 
-
-
-def w_main2(path):
-    # just for W k-means; synthetic data
-    h1, h2 = ask_h1_h2()
-    print(f"Valori scelti: h1 = {h1}, h2 = {h2}")
-    # path information
-    M, path_information = synthetic_path_generation(path, h1, h2)
-    prices = path_information['prices']
-    log_returns = path_information['log_returns']
-    t = path_information['t']
-    subsequences = path_information['subsequences']
-    theo_labels = path_information['theo_labels']
-    labels_prices = path_information['labels_prices']
-    path_seed = path_information['path_seed']
-
-    # clustering pre processing
-    X_wasserstein = w_lift_function(h1, h2, log_returns, M)
-    print(f'number of sub sequences = {M}')
-    # clustetring parameters
-    parameters = ask_w_param()
-    print(f"Selected parameters: {parameters}")
-    p = parameters['p']
-    clustering_seed = parameters['clustering_seed']
-    max_iter = parameters['max_iter']
-    tol = parameters['tol']
-    # clustering implementation
-    wkmeans, off_regime_index, on_regime_index = w_k_means(X_wasserstein, p, max_iter, tol, clustering_seed)
-
-    #plots:
-    # create directory
-    directory_path = f'figures/{path}/path_seed_{path_seed}/W_k_means/h_{h1}_{h2}/max_iter_{max_iter}_tol_{tol}/clustering_seed_{clustering_seed}/p_{p}'
-    ensure_directory_exists(directory_path)    
-    # projection of the clusters on the mu-sted plane
-    wk_mu_std_plot(X_wasserstein, wkmeans, off_regime_index, on_regime_index, directory_path)
-    # projection of the clusters on the excess kurtosis-skew plane
-    wk_kurt_skew_plot(X_wasserstein, wkmeans, off_regime_index, on_regime_index, directory_path)
-
-    # accuracy scores
-    r_counter = opt_counter(wkmeans, len(log_returns), M, h1, h2, o=False)
-    ROFS, RONS, TA = compute_accuracy_scores(r_counter, off_regime_index, on_regime_index, theo_labels)
-    save_and_print_values(directory_path, ROFS, RONS, TA, dec=2)
-
-
-
-
 def w_main1(path):
     # just for W k-means; real data
-    h1, h2 = ask_h1_h2()
-    print(f"Valori scelti: h1 = {h1}, h2 = {h2}")
+    
     # path information
-    m, path_information = real_path_processing(path, h1, h2)
-    prices = path_information['prices']
-    log_returns = path_information['log_returns']
-    t = path_information['t']
+    path_information = import_real_data(path)
 
     # clustering pre processing
-    X_wasserstein = w_lift_function(h1, h2, log_returns, m)
-    print(f'number of sub sequences = {m}')
+    h1, h2 = ask_h1_h2()
+    print(f"Valori scelti: h1 = {h1}, h2 = {h2}")
+
+    M, actual_path_information = real_path_processing(path_information, h1, h2)
+
+    prices = actual_path_information['prices']
+    log_returns = actual_path_information['log_returns']
+    t = actual_path_information['t']
+
+    X_wasserstein = w_lift_function(h1, h2, log_returns, M)
+    print(f'number of sub sequences = {M}')
 
     # clustetring parameters
     parameters = ask_w_param()
     print(f"Selected parameters: {parameters}")
+
     p = parameters['p']
     clustering_seed = parameters['clustering_seed']
     max_iter = parameters['max_iter']
     tol = parameters['tol']
 
-
     # clustering implementation
     wkmeans, off_regime_index, on_regime_index = w_k_means(X_wasserstein, p, max_iter, tol, clustering_seed)
-    # scatter plots:
+
     # create directory
     directory_path = f'figures/{path}/W_k_means/h_{h1}_{h2}/max_iter_{max_iter}_tol_{tol}/clustering_seed_{clustering_seed}/p_{p}'
     ensure_directory_exists(directory_path)
+    
     # projection of the clusters on the mu_std plane
     wk_mu_std_plot(X_wasserstein, wkmeans, off_regime_index, on_regime_index, directory_path)
     # projection of the clusters on the kurt_skew plane
     wk_kurt_skew_plot(X_wasserstein, wkmeans, off_regime_index, on_regime_index, directory_path)
+
+    # plots classified real log returns and path price
+    r_counter = opt_counter(wkmeans, len(log_returns), M, h1, h2, o=False)
+    classified_real_log_returns_plot(r_counter, off_regime_index, log_returns, t, directory_path)
+    classified_real_price_path_plot(r_counter, off_regime_index, prices, t, directory_path)
 
     # # projection of the clusters on the mu_skew plane
     # wk_mu_skew_plot(p, clustering_seed, h1, h2, path, X_wasserstein, wkmeans, max_iter, tol, off_regime_index, on_regime_index)
@@ -225,6 +188,65 @@ def w_main1(path):
     # wk_kurt_std_plot(p, clustering_seed, h1, h2, path, X_wasserstein, wkmeans, max_iter, tol, off_regime_index, on_regime_index)
     # # projection of the clusters on the kurt_mu plane
     # wk_kurt_mu_plot(p, clustering_seed, h1, h2, path, X_wasserstein, wkmeans, max_iter, tol, off_regime_index, on_regime_index)
+
+
+
+
+def w_main2(path):
+    # just for W k-means; synthetic data
+
+    # synthetic path generation
+    path_information = synthetic_path_generation(path)
+
+    # clustering pre processing
+    h1, h2 = ask_h1_h2()
+    print(f"Valori scelti: h1 = {h1}, h2 = {h2}")
+
+    # actual variables
+    M, actual_path_information = synthetic_path_processing(path_information, h1, h2)
+
+    prices = actual_path_information['prices']
+    log_returns = actual_path_information['log_returns']
+    t = actual_path_information['t']
+    regimes = actual_path_information['regimes']
+    theo_return_labels = actual_path_information['theo_return_labels']
+    path_seed = actual_path_information['path_seed'] 
+
+    X_wasserstein = w_lift_function(h1, h2, log_returns, M)
+    print(f'number of sub sequences = {M}')
+
+
+    # clustetring parameters
+    parameters = ask_w_param()
+    print(f"Selected parameters: {parameters}")
+
+    p = parameters['p']
+    clustering_seed = parameters['clustering_seed']
+    max_iter = parameters['max_iter']
+    tol = parameters['tol']
+    
+    # clustering implementation
+    wkmeans, off_regime_index, on_regime_index = w_k_means(X_wasserstein, p, max_iter, tol, clustering_seed)
+
+    # create directory 
+    directory_path = f'figures/{path}/path_seed_{path_seed}/W_k_means/h_{h1}_{h2}/max_iter_{max_iter}_tol_{tol}/clustering_seed_{clustering_seed}/p_{p}'
+    ensure_directory_exists(directory_path)    
+
+    # projection of the clusters on the mu-sted plane
+    wk_mu_std_plot(X_wasserstein, wkmeans, off_regime_index, on_regime_index, directory_path)
+    # projection of the clusters on the excess kurtosis-skew plane
+    wk_kurt_skew_plot(X_wasserstein, wkmeans, off_regime_index, on_regime_index, directory_path)
+
+    # plots of classified synthetic log_returns and path price
+    r_counter = opt_counter(wkmeans, len(log_returns), M, h1, h2, o=False)
+    classified_synthetic_log_returns_plot(r_counter, off_regime_index, log_returns, t, regimes, directory_path)
+    classified_synthetic_price_path_plot(r_counter, off_regime_index, prices, t, regimes, directory_path)
+
+    # accuracy scores 
+    ROFS, RONS, TA = compute_accuracy_scores(r_counter, off_regime_index, on_regime_index, theo_return_labels)
+    save_and_print_values(directory_path, ROFS, RONS, TA, dec=2)
+
+
 
 
 
