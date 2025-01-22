@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 
 
 def ensure_directory_exists(directory_path):
@@ -55,6 +56,20 @@ def save_and_print_values(directory_path, ROFS, RONS, TA, dec=2, file_name="resu
         file.write(content_file)
     
     print(f"Values have also been saved to {file_path}")
+
+def save_validation_results(rons, rofs, ta, run_times, directory_path):
+    # print the results as txt file
+    df = pd.DataFrame({
+        'RONS': 100*rons,
+        'ROFS': 100*rofs,
+        'TA': 100*ta,
+        'RUNTIME': run_times
+    })
+
+    # Construct the full file path
+    file_name = 'validation_results.txt'
+    file_path = os.path.join(directory_path, file_name)
+    df.to_csv(file_path, index=False)
 
 def ask_h1_h2():
     # all algorithm

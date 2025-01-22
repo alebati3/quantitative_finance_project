@@ -1,7 +1,35 @@
 import numpy as np
+import pandas as pd
 
 # optimization of the previous code by using ChatGPT
-def opt_counter(kmeans, n, M, h_1, h_2, o=True):
+# def opt_counter(kmeans, n, M, h_1, h_2, o=True):
+#     # Define the time indices for the sliding window
+#     time_indices = np.arange(n)[:, None] - (h_1 - h_2) * np.arange(M)[None, :]
+
+#     # Mask invalid indices and set invalid indices to -1
+#     time_indices = np.where((time_indices >= 0) & (time_indices <= h_1), time_indices, -1)
+
+#     # Count occurrences of each label efficiently
+#     r_counter = np.zeros((n, 2), dtype=np.int32)
+#     for i in range(M):
+#         valid_indices = time_indices[:, i]  # Extract valid indices for column i
+#         mask = valid_indices != -1  # Only process valid indices
+#         r_counter[mask, 0] += (kmeans.labels_[valid_indices[mask]] == 0)
+#         r_counter[mask, 1] += (kmeans.labels_[valid_indices[mask]] == 1)
+
+#     if o:
+#         # Compute s_counter by summing consecutive rows
+#         s_counter = np.zeros((n + 1, 2), dtype=np.int32)
+#         s_counter[0] = r_counter[0]
+#         s_counter[1:-1] = r_counter[:-1] + r_counter[1:]
+#         s_counter[-1] = r_counter[-1]
+#         return r_counter, s_counter
+#     else:
+#         return r_counter
+    
+
+
+def opt_counter(kmeans, n, M, h_1, h_2, o = True):
 
 
     # Define the time indices for the sliding window
@@ -9,9 +37,6 @@ def opt_counter(kmeans, n, M, h_1, h_2, o=True):
 
     # Mask invalid indices
     valid_mask = (time_indices >= 0) & (time_indices <= h_1)
-
-    # Use the valid_mask to filter time indices
-    filtered_time_indices = time_indices * valid_mask
 
     # Create the labels array, repeated across all k for efficient processing
     labels_repeated = np.tile(kmeans.labels_, (n, 1))
@@ -61,12 +86,12 @@ def compute_accuracy_scores(r_counter, off_regime_index, on_regime_index, theo_l
     
     return ROFS, RONS, TA
 
+
 def compute_accuracy_scores_hmm(hmm_labels, theo_labels, off_regime_index, on_regime_index):
     ROFS = np.sum(hmm_labels[theo_labels == 0] == off_regime_index) / len(hmm_labels[theo_labels == 0])
     RONS = np.sum(hmm_labels[theo_labels == 1] == on_regime_index) / len(hmm_labels[theo_labels == 1])
     TA = (np.sum(hmm_labels[theo_labels == 0] == off_regime_index) + np.sum(hmm_labels[theo_labels == 1] == on_regime_index)) / len(hmm_labels)
     return ROFS, RONS, TA
-
 
 
 def compare_columns(A, off_regime_index):

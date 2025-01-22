@@ -34,7 +34,7 @@ def generate_start_index(A, subseq_length, used_indices):
             return start_index
 
 # Funzione principale
-def generate_regimes(n, regime_length, num_subsequences=10, random_state=17):
+def generate_regimes(n, regime_length, num_subsequences=10, random_state=None):
     """
     Genera casualmente 10 intervalli di tempo distinti della stessa lunghezza.
 
@@ -100,12 +100,12 @@ def gbm(S0, mu, sigma, n, dt):
     S[1:] = S0 * np.exp(X)
     return S
 
-def gbm_path(n, c, t, dt, gbm_par, seed_path=None):
+def gbm_path(n, c, t, dt, gbm_par, path_seed=None):
     '''
     It simulates the entire path of a GBM with regimes switch.
     
     '''
-    np.random.seed(seed_path)
+    np.random.seed(path_seed)
     # array of prices
     s = np.zeros(n + 1)
     # initial stock price
@@ -172,12 +172,12 @@ def mjd(S0, mu, sigma, lam, gamma, delta, n, dt):
     return S
 
 
-def mjd_path(n, C, t, dt, mjd_par, seed_path):
+def mjd_path(n, C, t, dt, mjd_par, path_seed=None):
     '''
     It simulates the entire path of a MJD with regimes switch.
     
     '''
-    np.random.seed(seed_path)
+    np.random.seed(path_seed)
     # array of prices
     s = np.zeros(n + 1)
     # initial stock price
@@ -205,7 +205,7 @@ def mjd_path(n, C, t, dt, mjd_par, seed_path):
 
 
 
-def synthetic_path_generation(path):
+def synthetic_path_generation(path, regimes_seed=17):
     # for W k-means, M k-means and HMM
 
     # time horizon in years
@@ -223,7 +223,7 @@ def synthetic_path_generation(path):
     # time evolution
     t = np.linspace(0, T, N+1)
 
-    regimes, theo_return_labels, theo_price_labels = generate_regimes(N, l_regime)
+    regimes, theo_return_labels, theo_price_labels = generate_regimes(N, l_regime, random_state=regimes_seed)
 
     # GBM parameters
     gbm_par = np.array(
