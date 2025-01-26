@@ -3,7 +3,6 @@
 
 # Image file extensions
 *.png
-*.pdf 
 
 # macOS System Files
 .DS_Store
